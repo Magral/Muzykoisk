@@ -1,39 +1,22 @@
-# Музыкоиск — Android prototype v0.1.2
+# Музыкоиск
 
-Kotlin / Jetpack Compose, без собственного сервера и обязательных API-ключей.
+Android-приложение на Kotlin и Jetpack Compose. Для поиска используются открытые каталоги и публичные страницы; собственный сервер не требуется.
 
-## Реализовано
-- Параллельный поиск с тайм-аутами и отменой.
-- HTML-адаптеры для публичных главных страниц Muzbab, MUZYQA, Nishevo на Jsoup.
-- Дополнительный поиск в Internet Archive.
-- Переход на страницу трека.
-- Android DownloadManager для файлов, на которые **явно подтверждено** разрешение скачивания.
+## Что умеет текущая версия
 
-## Важные ограничения
-- HTML-адаптеры сейчас просматривают **только ссылки на главной странице**, а не весь каталог сайта. Это экспериментальная интеграция; конкретные треки могут не находиться.
-- У HTML-результатов статус права UNKNOWN, поэтому прямая кнопка скачивания для них не показывается. Надпись «скачать бесплатно» не является доказательством лицензии.
-- JamendoSource оставлен в коде, но не включён: требует client ID.
-- Не проверена компиляция и работа на устройстве; APK не собран.
-- Чарты, библиотека, проверка реального MP3 и полный поиск по сайтам пока не реализованы.
+- Искать треки в подключённых открытых источниках.
+- Сохранять избранное между запусками приложения.
+- Проверять записи Internet Archive на наличие прямого MP3 и опубликованной лицензии из разрешённого списка.
+- Запускать загрузку внутри приложения и показывать её статус, прогресс и лицензию во вкладке «Загрузки».
+- Сохранять загруженные файлы в `Музыка/Muzykoisk` через Android DownloadManager.
 
-## Сборка
-Android Studio, JDK 17, Android SDK 35. Gradle wrapper и CI пока отсутствуют.
+## Ограничения загрузок
 
-## Следующий этап
-1. Проверить HTML-разметку и маршруты поиска каждого сайта в реальных сетевых тестах.
-2. Добавить отдельные парсеры поисковой выдачи с ограничением частоты запросов.
-3. Подключить прямое скачивание только из источников с проверенными разрешениями.
-4. Добавить Gradle wrapper и CI сборку APK.
+- Кнопка загрузки активна для источников, которые передали прямой HTTPS URL и проверяемое разрешение. Для Internet Archive приложение требует MP3-файл и опубликованную лицензию CC0, Public Domain Mark, CC BY или CC BY-SA.
+- Значение лицензии берётся из метаданных записи Internet Archive и не является независимой юридической экспертизой. Если метаданные или файл отсутствуют, загрузка не начинается.
+- HTML-каталоги и записи с неизвестными правами можно искать и добавлять в избранное, но скачать их нельзя.
+- Поиск по HTML-каталогам экспериментальный и зависит от текущей разметки сайтов.
 
-## v0.1.3 (development)
-- Added GitHub Actions workflow to build and upload a debug APK artifact on push to main or manual dispatch.
-- Added ChartSource for public weekly chart links and a chart screen; site markup is not guaranteed and needs on-device verification.
-- Added generic SiteSearchSource for confirmed search endpoints; not enabled until endpoint forms are verified.
-- HTML homepage adapters remain experimental and do not constitute full-catalog search.
-- Downloader code exists, but no source currently supplies a rights-verified MP3 URL. **No successful MP3 download has been confirmed.**
-- Build status not yet verified. A workflow file being committed does not mean APK compilation succeeded.
+## Сборка и релиз
 
-## v0.1.4 development
-- HTML adapters now discover standard public GET search forms and parse matching result links; site-specific forms/markup require verification.
-- Unit tests enforce direct-download rights gating; CI now runs tests before assembling APK.
-- No successful workflow run, installed APK, or MP3 download has yet been independently verified.
+Нужны JDK 17, Android SDK 35 и Gradle 8.9. GitHub Actions выполняет unit tests, собирает APK, проверяет подпись и публикует релиз при push в `main`. Версия релиза берётся из `app/build.gradle.kts`.

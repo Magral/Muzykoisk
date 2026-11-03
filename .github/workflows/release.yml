@@ -32,6 +32,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Read app version
+        id: app_version
+        run: |
+          VERSION_NAME=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)
+          test -n "$VERSION_NAME"
+          echo "name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
       - name: Verify signing secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.MUZYKOISK_KEYSTORE_BASE64 }}
@@ -59,10 +65,12 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Muzykoisk-v1.0.1-signed
+          name: Muzykoisk-v${{ steps.app_version.outputs.name }}-signed
           path: app/build/outputs/apk/release/app-release.apk
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ steps.app_version.outputs.name }}
         run: |
-          gh release create v1.0.1 app/build/outputs/apk/release/app-release.apk --title "Музыкоиск v1.0.1" --notes "Обновление: сохранение избранных треков между запусками, открытие источников и удаление из библиотеки. Экспериментальные источники поиска." --target "$GITHUB_SHA"
+          TAG="v$VERSION_NAME"
+          gh release create "$TAG" app/build/outputs/apk/release/app-release.apk --title "Музыкоиск $TAG" --notes "Обновление: загрузка разрешённых MP3 файлов из приложения, проверка опубликованной лицензии и экран состояния загрузок." --target "$GITHUB_SHA"
