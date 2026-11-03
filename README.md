@@ -32,3 +32,8 @@ Android Studio, JDK 17, Android SDK 35. Gradle wrapper и CI пока отсут
 - HTML homepage adapters remain experimental and do not constitute full-catalog search.
 - Downloader code exists, but no source currently supplies a rights-verified MP3 URL. **No successful MP3 download has been confirmed.**
 - Build status not yet verified. A workflow file being committed does not mean APK compilation succeeded.
+
+## v0.1.4 development
+- HTML adapters now discover standard public GET search forms and parse matching result links; site-specific forms/markup require verification.
+- Unit tests enforce direct-download rights gating; CI now runs tests before assembling APK.
+- No successful workflow run, installed APK, or MP3 download has yet been independently verified.
