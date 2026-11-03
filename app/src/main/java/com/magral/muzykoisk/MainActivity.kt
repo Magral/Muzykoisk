@@ -18,6 +18,7 @@ import com.magral.muzykoisk.sources.ArchiveSource
 import com.magral.muzykoisk.sources.JamendoSource
 import com.magral.muzykoisk.sources.SearchEngine
 import com.magral.muzykoisk.sources.SourceRegistry
+import com.magral.muzykoisk.sources.ChartSource
 import com.magral.muzykoisk.downloads.VerifiedDownloader
 import kotlinx.coroutines.launch
 
@@ -34,6 +35,7 @@ fun MuzykoiskApp() {
     var selected by remember { mutableIntStateOf(0) }
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Track>>(emptyList()) }
+    var chart by remember { mutableStateOf<List<Track>>(emptyList()) }
     var searching by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -91,6 +93,21 @@ fun MuzykoiskApp() {
                         HorizontalDivider()
                     }
                 }
+            } else if (selected == 1) {
+                Button(onClick = {
+                    scope.launch {
+                        searching = true
+                        try { chart = ChartSource().weekly(); message = if (chart.isEmpty()) "Чарт недоступен" else "" }
+                        catch (e: Exception) { message = "Ошибка загрузки чарта" }
+                        finally { searching = false }
+                    }
+                }, enabled = !searching) { Text("Загрузить топ недели") }
+                if (message.isNotBlank()) Text(message)
+                LazyColumn { items(chart) { track ->
+                    TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(track.pageUrl))) }) {
+                        Text(track.title)
+                    }
+                } }
             } else {
                 Text("${tabs[selected]} — раздел в разработке")
             }
