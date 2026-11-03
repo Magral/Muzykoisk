@@ -24,3 +24,11 @@ Android Studio, JDK 17, Android SDK 35. Gradle wrapper и CI пока отсут
 2. Добавить отдельные парсеры поисковой выдачи с ограничением частоты запросов.
 3. Подключить прямое скачивание только из источников с проверенными разрешениями.
 4. Добавить Gradle wrapper и CI сборку APK.
+
+## v0.1.3 (development)
+- Added GitHub Actions workflow to build and upload a debug APK artifact on push to main or manual dispatch.
+- Added ChartSource for public weekly chart links and a chart screen; site markup is not guaranteed and needs on-device verification.
+- Added generic SiteSearchSource for confirmed search endpoints; not enabled until endpoint forms are verified.
+- HTML homepage adapters remain experimental and do not constitute full-catalog search.
+- Downloader code exists, but no source currently supplies a rights-verified MP3 URL. **No successful MP3 download has been confirmed.**
+- Build status not yet verified. A workflow file being committed does not mean APK compilation succeeded.
