@@ -17,6 +17,8 @@ import com.magral.muzykoisk.domain.Track
 import com.magral.muzykoisk.sources.ArchiveSource
 import com.magral.muzykoisk.sources.JamendoSource
 import com.magral.muzykoisk.sources.SearchEngine
+import com.magral.muzykoisk.sources.SourceRegistry
+import com.magral.muzykoisk.downloads.VerifiedDownloader
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -37,7 +39,7 @@ fun MuzykoiskApp() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     // Jamendo requires a developer client ID; empty until configured.
-    val engine = remember { SearchEngine(listOf(ArchiveSource(), JamendoSource(""))) }
+    val engine = remember { SearchEngine(SourceRegistry.keyless() + ArchiveSource()) }
     var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     Scaffold(bottomBar = {
         ScrollableTabRow(selectedTabIndex = selected) {
@@ -76,9 +78,15 @@ fun MuzykoiskApp() {
                             Text(track.title, style = MaterialTheme.typography.titleMedium)
                             Text("${track.artist} · ${track.sourceId}")
                             Text(if (track.canDownload) "Загрузка разрешена" else "Открыть страницу источника")
-                            TextButton(onClick = {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(track.pageUrl)))
-                            }) { Text("Источник") }
+                            Row {
+                                TextButton(onClick = {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(track.pageUrl)))
+                                }) { Text("Источник") }
+                                if (track.canDownload) TextButton(onClick = {
+                                    runCatching { VerifiedDownloader(context).enqueue(track) }
+                                        .onFailure { message = "Ошибка загрузки: " + it.message }
+                                }) { Text("Скачать") }
+                            }
                         }
                         HorizontalDivider()
                     }
