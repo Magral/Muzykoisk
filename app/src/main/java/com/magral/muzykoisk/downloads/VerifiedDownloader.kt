@@ -15,11 +15,13 @@ class VerifiedDownloader(private val context: Context) {
         require(track.canDownload) { "Download rights not verified" }
         val url = requireNotNull(track.downloadUrl)
         require(Uri.parse(url).scheme == "https")
+        require(Uri.parse(url).host != null) { "Invalid download host" }
         val filename = (track.artist + " - " + track.title)
             .replace(Regex("[^\\p{L}\\p{N} ._-]"), "_")
             .take(110).trim().ifEmpty { "audio" } + ".mp3"
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle(track.title)
+            .setMimeType("audio/mpeg")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "Muzykoisk/$filename")
             .setAllowedOverMetered(true)
