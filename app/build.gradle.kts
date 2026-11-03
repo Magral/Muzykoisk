@@ -6,7 +6,26 @@ plugins {
 android {
     namespace = "com.magral.muzykoisk"
     compileSdk = 35
-    defaultConfig { applicationId = "com.magral.muzykoisk"; minSdk = 26; targetSdk = 35; versionCode = 2; versionName = "0.1.1" }
+    defaultConfig { applicationId = "com.magral.muzykoisk"; minSdk = 26; targetSdk = 35; versionCode = 10000; versionName = "1.0.0" }
+    signingConfigs {
+        create("release") {
+            val keyPath = System.getenv("MUZYKOISK_KEYSTORE_PATH")
+            if (!keyPath.isNullOrBlank()) {
+                storeFile = file(keyPath)
+                storePassword = System.getenv("MUZYKOISK_STORE_PASSWORD")
+                keyAlias = System.getenv("MUZYKOISK_KEY_ALIAS")
+                keyPassword = System.getenv("MUZYKOISK_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            if (!System.getenv("MUZYKOISK_KEYSTORE_PATH").isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            isMinifyEnabled = false
+        }
+    }
     buildFeatures { compose = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
