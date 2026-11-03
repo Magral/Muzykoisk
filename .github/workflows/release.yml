@@ -1,0 +1,47 @@
+name: Signed Android release
+on:
+  workflow_dispatch:
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Verify signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MUZYKOISK_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.MUZYKOISK_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.MUZYKOISK_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.MUZYKOISK_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" && test -n "$STORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD" || { echo "Missing signing secrets"; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/muzykoisk-release.jks"
+      - name: Build signed APK
+        env:
+          MUZYKOISK_KEYSTORE_PATH: ${{ runner.temp }}/muzykoisk-release.jks
+          MUZYKOISK_STORE_PASSWORD: ${{ secrets.MUZYKOISK_STORE_PASSWORD }}
+          MUZYKOISK_KEY_ALIAS: ${{ secrets.MUZYKOISK_KEY_ALIAS }}
+          MUZYKOISK_KEY_PASSWORD: ${{ secrets.MUZYKOISK_KEY_PASSWORD }}
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify signature
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Muzykoisk-v1.0.0-signed
+          path: app/build/outputs/apk/release/app-release.apk
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.0.0 app/build/outputs/apk/release/app-release.apk --title "Музыкоиск v1.0.0" --notes "Первый подписанный релиз. Экспериментальный поиск и чарты; доступность источников не гарантируется." --target "$GITHUB_SHA"
