@@ -19,8 +19,6 @@ import com.magral.muzykoisk.downloads.DownloadHistory
 import com.magral.muzykoisk.downloads.DownloadSnapshot
 import com.magral.muzykoisk.downloads.VerifiedDownloader
 import com.magral.muzykoisk.sources.ArchiveSource
-import com.magral.muzykoisk.sources.ChartSource
-import com.magral.muzykoisk.sources.SourceRegistry
 import com.magral.muzykoisk.sources.SearchEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,11 +34,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MuzykoiskApp() {
-    val tabs = listOf("Поиск", "Чарты", "Загрузки", "Моя музыка", "Настройки")
+    val tabs = listOf("Поиск", "Загрузки", "Моя музыка", "Настройки")
     var selected by remember { mutableIntStateOf(0) }
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Track>>(emptyList()) }
-    var chart by remember { mutableStateOf<List<Track>>(emptyList()) }
     var downloads by remember { mutableStateOf<List<DownloadSnapshot>>(emptyList()) }
     var searching by remember { mutableStateOf(false) }
     var preparingDownload by remember { mutableStateOf<String?>(null) }
@@ -77,7 +74,7 @@ fun MuzykoiskApp() {
                     }
                     val id = VerifiedDownloader(context).enqueue(downloadable)
                     downloadHistory.add(id, downloadable)
-                    selected = 2
+                    selected = 1
                     message = "Загрузка началась. Её состояние показано во вкладке «Загрузки»."
                 }
             } catch (e: Exception) {
@@ -88,11 +85,11 @@ fun MuzykoiskApp() {
         }
     }
 
-    val engine = remember { SearchEngine(SourceRegistry.keyless() + ArchiveSource()) }
+    val engine = remember { SearchEngine(listOf(ArchiveSource())) }
     var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     LaunchedEffect(selected) {
-        while (selected == 2) {
+        while (selected == 1) {
             downloads = downloadHistory.snapshots()
             delay(900)
         }
@@ -125,7 +122,7 @@ fun MuzykoiskApp() {
                                 message = ""
                                 try {
                                     results = engine.search(query)
-                                    if (results.isEmpty()) message = "Ничего не найдено"
+                                    if (results.isEmpty()) message = "Нет результатов с доступной прямой MP3-загрузкой."
                                 } catch (_: kotlinx.coroutines.CancellationException) {
                                     message = "Поиск отменён"
                                 } finally {
@@ -163,34 +160,6 @@ fun MuzykoiskApp() {
                     }
                 }
                 1 -> {
-                    Button(onClick = {
-                        scope.launch {
-                            searching = true
-                            message = ""
-                            try {
-                                chart = ChartSource().weekly()
-                                if (chart.isEmpty()) message = "Чарт недоступен"
-                            } catch (_: Exception) {
-                                message = "Ошибка загрузки чарта"
-                            } finally {
-                                searching = false
-                            }
-                        }
-                    }, enabled = !searching) { Text("Загрузить топ недели") }
-                    if (message.isNotBlank()) Text(message)
-                    LazyColumn {
-                        items(chart, key = { it.pageUrl }) { track ->
-                            Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                                Text(track.title, style = MaterialTheme.typography.titleMedium)
-                                if (track.canDownload || track.sourceId == "archive") {
-                                    TextButton(onClick = { startDownload(track) }) { Text(downloadButtonText(track)) }
-                                } else Text(downloadDescription(track))
-                            }
-                            HorizontalDivider()
-                        }
-                    }
-                }
-                2 -> {
                     Text("Загрузки: ${downloads.size}", style = MaterialTheme.typography.titleMedium)
                     if (downloads.isEmpty()) Text("Здесь появятся загрузки, начатые в приложении.")
                     LazyColumn {
@@ -212,7 +181,7 @@ fun MuzykoiskApp() {
                         }
                     }
                 }
-                3 -> {
+                2 -> {
                     Text("Избранное: ${savedTracks.size}", style = MaterialTheme.typography.titleMedium)
                     if (savedTracks.isEmpty()) Text("Добавляйте треки из результатов поиска.")
                     LazyColumn {
@@ -245,8 +214,8 @@ private fun downloadButtonText(track: Track) =
     if (track.canDownload) "Скачать" else "Проверить и скачать"
 
 private fun downloadDescription(track: Track) = when {
-    track.canDownload -> "Разрешённая загрузка подтверждена"
-    track.sourceId == "archive" -> "Проверить лицензию и скачать MP3 в приложении"
+    track.canDownload -> "MP3 доступен для загрузки в приложении"
+    track.sourceId == "archive" -> "Проверить доступность MP3 и скачать в приложении"
     else -> "Прямая загрузка недоступна: права и MP3-ссылка не подтверждены"
 }
 

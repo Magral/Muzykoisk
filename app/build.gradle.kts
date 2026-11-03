@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "com.magral.muzykoisk"
     compileSdk = 35
-    defaultConfig { applicationId = "com.magral.muzykoisk"; minSdk = 26; targetSdk = 35; versionCode = 10002; versionName = "1.0.2" }
+    defaultConfig { applicationId = "com.magral.muzykoisk"; minSdk = 26; targetSdk = 35; versionCode = 10003; versionName = "1.0.3" }
     signingConfigs {
         create("release") {
             val keyPath = System.getenv("MUZYKOISK_KEYSTORE_PATH")
