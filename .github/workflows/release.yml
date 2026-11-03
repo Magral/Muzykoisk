@@ -37,6 +37,12 @@ jobs:
           MUZYKOISK_KEY_ALIAS: ${{ secrets.MUZYKOISK_KEY_ALIAS }}
           MUZYKOISK_KEY_PASSWORD: ${{ secrets.MUZYKOISK_KEY_PASSWORD }}
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Report failed build to GitHub issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "Muzykoisk release CI failed: ${GITHUB_SHA:0:7}" --body "Signed release workflow failed. Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Review the failed step logs. No signing secrets are included." || true
       - name: Verify signature
         run: |
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
